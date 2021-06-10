@@ -49,7 +49,12 @@ public class SatellitePass {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				// TODO Auto-generated method stub
-				showOpenFileDialog();
+				try {
+					showOpenFileDialog();
+				} catch (IllegalArgumentException | InvalidTleException | SatNotFoundException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			}
 			
 		});
@@ -110,8 +115,11 @@ public class SatellitePass {
 	
 	/**
 	 * Open File Dialog to add Satellite Object by TLE file
+	 * @throws SatNotFoundException 
+	 * @throws InvalidTleException 
+	 * @throws IllegalArgumentException 
 	 */
-	private static void showOpenFileDialog() {
+	private static void showOpenFileDialog() throws IllegalArgumentException, InvalidTleException, SatNotFoundException {
 		JFileChooser fc = new JFileChooser();
 		fc.setCurrentDirectory(new File(System.getProperty("user.home")));
 		fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -132,8 +140,11 @@ public class SatellitePass {
 	
 	/**
 	 * Open Satellite Chooser Dialog Function 
+	 * @throws SatNotFoundException 
+	 * @throws InvalidTleException 
+	 * @throws IllegalArgumentException 
 	 */
-	private static void openSatChooseDialog(String filePath) {
+	private static void openSatChooseDialog(String filePath) throws IllegalArgumentException, InvalidTleException, SatNotFoundException {
 		if (satChooseDialog == null) {
 			Window win = SwingUtilities.getWindowAncestor(frame);
 			//if(win != null) {

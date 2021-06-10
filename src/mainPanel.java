@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TimeZone;
+import java.util.TreeMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -50,7 +51,7 @@ public class mainPanel extends JPanel {
 	private ArrayList<Satellite> satList;
 	private ArrayList<GroundStationPosition> obsList;
 	
-	private LinkedHashMap<String,HashMap<Date,String[]>> schedule;
+	private LinkedHashMap<String,TreeMap<Date,String[]>> schedule;
 	
 	/**
 	 * Create the panel.
@@ -150,8 +151,11 @@ public class mainPanel extends JPanel {
 	/**
 	 * Set Collection for satellite tle data 
 	 * @param map
+	 * @throws SatNotFoundException 
+	 * @throws InvalidTleException 
+	 * @throws IllegalArgumentException 
 	 */
-	public void setSelectedSatObj(HashMap<String,ArrayList<String>> map) {
+	public void setSelectedSatObj(HashMap<String,ArrayList<String>> map) throws IllegalArgumentException, InvalidTleException, SatNotFoundException {
 		/**
 		satObj.putAll(map);
 		for(String key:map.keySet()) {
@@ -175,7 +179,13 @@ public class mainPanel extends JPanel {
 			satList.add(sat);
 		}
 		this.objectTree.repaint();
+		
 		this.paintSatDataToTable();
+		// Paint schedule table
+		if (this.obsList != null && this.obsList.size() > 0) {
+			this.initObsTable();
+		}
+		
 	}
 	
 	
@@ -217,7 +227,11 @@ public class mainPanel extends JPanel {
 			this.addObsToTree(entry.getKey());
 		}
 		this.objectTree.repaint();
-		this.initObsTable();
+		
+		// Paint schedule table
+		if (this.satList != null && this.satList.size() > 0) {
+			this.initObsTable();
+		}
 	}
 	
 	/**
@@ -273,7 +287,7 @@ public class mainPanel extends JPanel {
 	 */
 	private void initObsTable() throws IllegalArgumentException, InvalidTleException, SatNotFoundException {
 		DefaultTableModel obsTabModel = new DefaultTableModel();
-		ArrayList<String> colSeed = new ArrayList<String>(Arrays.asList("Sats ","AOS","LOS","Max El"));
+		ArrayList<String> colSeed = new ArrayList<String>(Arrays.asList("Day","Sats ","AOS","LOS","Max El"));
 		ArrayList<String> col = new ArrayList<>();
 		int obsNum = obsList.size();
 		
@@ -325,18 +339,21 @@ public class mainPanel extends JPanel {
 			maxSch = (maxSch < this.schedule.get(key).size()) ? this.schedule.get(key).size() : maxSch;
 		}
 		
-		int numbCol = 4 * numbObs;
+		int numbCol = 5 * numbObs;
 		String[][] rowCols = new String[maxSch][numbCol];
 		
 		// Direct access to col and row number
 		int gsIdx = 0;
-		for(Map.Entry<String, HashMap<Date, String[]>> element : schedule.entrySet()) {
+		for(Map.Entry<String, TreeMap<Date, String[]>> element : schedule.entrySet()) {
 			int r = 0;
 			for (Map.Entry<Date, String[]> schItem : element.getValue().entrySet()) {
-				rowCols[r][4*gsIdx+0] = schItem.getValue()[0];
-				rowCols[r][4*gsIdx+1] = schItem.getKey().toString();
-				rowCols[r][4*gsIdx+2] = schItem.getValue()[1];
-				rowCols[r][4*gsIdx+3] = schItem.getValue()[2];
+				String[] aos =  schItem.getKey().toString().split(" ",0);
+				String[] los =  schItem.getValue()[1].split(" ",0);
+				rowCols[r][5*gsIdx+0] = aos[0]+" "+aos[1]+" "+aos[2]; // Date
+				rowCols[r][5*gsIdx+1] = schItem.getValue()[0]; // Sat
+				rowCols[r][5*gsIdx+2] = aos[3]; // AOS
+				rowCols[r][5*gsIdx+3] = los[3]; // LOS
+				rowCols[r][5*gsIdx+4] = schItem.getValue()[2].substring(0,4); // MaxEl
 				r++;
 			}
 			gsIdx++;
@@ -369,7 +386,7 @@ public class mainPanel extends JPanel {
 		
 		for (int x = 0; x < obsList.size(); x++) {
 			gs = obsList.get(x);
-			HashMap<Date,String[]> obsSch = new HashMap<>();
+			TreeMap<Date,String[]> obsSch = new TreeMap<>();
 			
 			// Iterate Satellite
 			for (int y = 0; y < satList.size(); y++) {
