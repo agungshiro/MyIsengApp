@@ -80,7 +80,7 @@ public class SatellitePass {
 		frame.pack();
 		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
-		frame.setSize(747,545);
+		frame.setSize(747,600);
 		frame.setResizable(false);
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
 		frame.setLocation(dim.width/2-frame.getSize().width/2, dim.height/2-frame.getSize().height/2);

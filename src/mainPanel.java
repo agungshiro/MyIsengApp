@@ -5,8 +5,10 @@ import javax.swing.JTextField;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -30,6 +32,8 @@ import org.apache.commons.lang.ArrayUtils;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.JTable;
+import java.awt.Color;
+import java.awt.Font;
 
 public class mainPanel extends JPanel {
 	private JTextField timeField;
@@ -52,6 +56,16 @@ public class mainPanel extends JPanel {
 	private ArrayList<GroundStationPosition> obsList;
 	
 	private LinkedHashMap<String,TreeMap<Date,String[]>> schedule;
+	private TreeMap<Date,String[]> scheduleStack;
+	
+	private JLabel infoSatName;
+	private JLabel infoObsName;
+	private JLabel infoPassTime;
+	private JLabel latterPass1;
+	private JLabel latterPass2;
+	private JLabel latterPass3;
+	private JLabel countDown;
+	private SimpleDateFormat counterFormat = new SimpleDateFormat("HH:mm:ss");
 	
 	/**
 	 * Create the panel.
@@ -81,7 +95,7 @@ public class mainPanel extends JPanel {
 		// Object Tree
 		objectTree = new JTree();
 		this.buildTree();
-		objectTree.setBounds(17, 42, 139, 387);
+		objectTree.setBounds(17, 42, 139, 470);
 		add(objectTree);
 		
 		//satTable = new JTable();
@@ -99,8 +113,67 @@ public class mainPanel extends JPanel {
 		obsTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		add(obsTable);
 		JScrollPane obsTabScroll = new JScrollPane(obsTable);
-		obsTabScroll.setBounds(168, 198, 534, 231);
+		obsTabScroll.setBounds(168, 281, 534, 231);
 		add(obsTabScroll);
+		
+		JPanel infoPanel = new JPanel();
+		infoPanel.setForeground(new Color(0, 100, 0));
+		infoPanel.setBorder(null);
+		infoPanel.setBackground(new Color(175, 238, 238));
+		infoPanel.setBounds(168, 170, 534, 99);
+		add(infoPanel);
+		infoPanel.setLayout(null);
+		
+		JLabel lblNewLabel_1 = new JLabel("Next Pass");
+		lblNewLabel_1.setFont(new Font("Lucida Grande", Font.BOLD, 10));
+		lblNewLabel_1.setForeground(new Color(47, 79, 79));
+		lblNewLabel_1.setBounds(6, 6, 103, 16);
+		infoPanel.add(lblNewLabel_1);
+		
+		infoSatName = new JLabel("Satellite Name");
+		infoSatName.setFont(new Font("Lucida Grande", Font.PLAIN, 27));
+		infoSatName.setForeground(new Color(178, 34, 34));
+		infoSatName.setBounds(69, 6, 194, 28);
+		infoPanel.add(infoSatName);
+		
+		infoObsName = new JLabel("Ground Station");
+		infoObsName.setFont(new Font("Lucida Grande", Font.PLAIN, 18));
+		infoObsName.setForeground(new Color(47, 79, 79));
+		infoObsName.setBounds(69, 34, 194, 28);
+		infoPanel.add(infoObsName);
+		
+		infoPassTime = new JLabel("on 00:00:00 |");
+		infoPassTime.setBounds(69, 64, 90, 16);
+		infoPanel.add(infoPassTime);
+		
+		JLabel lblNewLabel_1_1 = new JLabel("Latter");
+		lblNewLabel_1_1.setForeground(new Color(47, 79, 79));
+		lblNewLabel_1_1.setFont(new Font("Lucida Grande", Font.BOLD, 10));
+		lblNewLabel_1_1.setBounds(298, 6, 103, 16);
+		infoPanel.add(lblNewLabel_1_1);
+		
+		latterPass1 = new JLabel("00:00:00 Satellite Observer");
+		latterPass1.setForeground(new Color(47, 79, 79));
+		latterPass1.setFont(new Font("Lucida Grande", Font.PLAIN, 10));
+		latterPass1.setBounds(298, 31, 230, 16);
+		infoPanel.add(latterPass1);
+		
+		latterPass2 = new JLabel("00:00:00 Satellite Observer");
+		latterPass2.setForeground(new Color(47, 79, 79));
+		latterPass2.setFont(new Font("Lucida Grande", Font.PLAIN, 10));
+		latterPass2.setBounds(298, 46, 230, 16);
+		infoPanel.add(latterPass2);
+		
+		latterPass3 = new JLabel("00:00:00 Satellite Observer");
+		latterPass3.setForeground(new Color(47, 79, 79));
+		latterPass3.setFont(new Font("Lucida Grande", Font.PLAIN, 10));
+		latterPass3.setBounds(298, 59, 230, 16);
+		infoPanel.add(latterPass3);
+		
+		countDown = new JLabel("00:00:00");
+		countDown.setForeground(new Color(47, 79, 79));
+		countDown.setBounds(159, 64, 90, 16);
+		infoPanel.add(countDown);
 		
 		// Time Function
 		globalTime = new Timer(1000,new ActionListener() {
@@ -111,6 +184,27 @@ public class mainPanel extends JPanel {
 				timeString();
 				if (satList.size() > 0) {
 					paintSatDataToTable();
+				}
+				if (scheduleStack != null && scheduleStack.size() > 0) {
+					try {
+						countDown.setText(countDownMaker());
+						if(countDownMaker().equals("0:0:0")) {
+							initObsTable();
+							setInfoBoard();
+						}
+					} catch (ParseException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					} catch (IllegalArgumentException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					} catch (InvalidTleException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					} catch (SatNotFoundException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
 				}
 			}
 			
@@ -133,6 +227,21 @@ public class mainPanel extends JPanel {
 			}
 		});
 
+	}
+	
+	private String countDownMaker() throws ParseException {
+		String passTime = this.infoPassTime.getText();
+		String curTime = this.timeField.getText();
+		Date t1 = this.counterFormat.parse(passTime);
+		Date t2 = this.counterFormat.parse(curTime);
+		long diff = t1.getTime()-t2.getTime();
+		
+		long diffSeconds = diff / 1000 % 60;
+		long diffMinutes = diff / (60 * 1000) % 60;
+		long diffHours = diff / (60 * 60 * 1000) % 24;
+		
+		String out = Long.toString(diffHours)+":"+Long.toString(diffMinutes)+":"+Long.toString(diffSeconds);
+		return out;
 	}
 	
 	/**
@@ -184,6 +293,7 @@ public class mainPanel extends JPanel {
 		// Paint schedule table
 		if (this.obsList != null && this.obsList.size() > 0) {
 			this.initObsTable();
+			this.setInfoBoard();
 		}
 		
 	}
@@ -231,6 +341,7 @@ public class mainPanel extends JPanel {
 		// Paint schedule table
 		if (this.satList != null && this.satList.size() > 0) {
 			this.initObsTable();
+			this.setInfoBoard();
 		}
 	}
 	
@@ -242,7 +353,7 @@ public class mainPanel extends JPanel {
 		this.satelliteNode.add(new DefaultMutableTreeNode(sat));
 	}
 	
-	/**
+	/**  
 	 * Add Observer Name to the tree
 	 * @param sat
 	 */
@@ -255,7 +366,7 @@ public class mainPanel extends JPanel {
 	 */
 	public void timeString() {
 		String timeNow = "";
-		Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+		Calendar cal = Calendar.getInstance(/**TimeZone.getTimeZone("GMT")**/);
 		int h = cal.get(Calendar.HOUR_OF_DAY);
 		int m = cal.get(Calendar.MINUTE);
 		int s = cal.get(Calendar.SECOND);
@@ -277,6 +388,28 @@ public class mainPanel extends JPanel {
 		tModel = new DefaultTableModel(numRow,col.length);
 		tModel.setColumnIdentifiers(col);
 		satTable = new JTable(tModel);
+	}
+	
+	private void setInfoBoard() {
+		int idx = 0;
+		for(Map.Entry<Date, String[]> entry : this.scheduleStack.entrySet()) {
+			String[] time = entry.getKey().toString().split(" ",0);
+			String[] val = entry.getValue();
+			if(idx == 0) {
+				this.infoSatName.setText(val[0]);
+				this.infoObsName.setText(val[3]);
+				this.infoPassTime.setText(time[3]);
+			} else if (idx == 1) {
+				this.latterPass1.setText(time[3]+" "+val[0]+" "+val[3]);
+			} else if (idx == 2) {
+				this.latterPass2.setText(time[3]+" "+val[0]+" "+val[3]);
+			} else if (idx == 3) {
+				this.latterPass3.setText(time[3]+" "+val[0]+" "+val[3]);
+			} else {
+				break;
+			}
+			idx++;
+		}
 	}
 	
 	/**
@@ -380,6 +513,7 @@ public class mainPanel extends JPanel {
 		SatPos satPos;
 		Date dt = new Date();
 		schedule = new LinkedHashMap<>();
+		this.scheduleStack = new TreeMap<>();
 		
 		// Create Data Structure for Schedule based on each observer
 		// The Structure should be HashMap<Observer,HashMap<ComparableSatPass, String[]>>
@@ -399,16 +533,16 @@ public class mainPanel extends JPanel {
 					SatPassTime spt = passes.get(z);
 					SimpleDateFormat f = new SimpleDateFormat("E MMM dd HH:mm:ss z yyyy");
 					String strDate = f.format(spt.getEndTime());
-					String[] val = {tle.getName(),strDate,Double.toString(spt.getMaxEl())};
+					String[] val = {tle.getName(),strDate,Double.toString(spt.getMaxEl()),gs.getName()};
 					obsSch.put(spt.getStartTime(), val);
+					this.scheduleStack.put(spt.getStartTime(), val);
 				}
 				
 			}
 			
 			schedule.put(gs.getName(), obsSch);
 		}
-		
-		
+		 
 		// Set Schedule Item
 	}
 	
@@ -421,5 +555,4 @@ public class mainPanel extends JPanel {
 		}
 		
 	}
-	
 }
