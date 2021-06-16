@@ -33,7 +33,9 @@ import org.apache.commons.lang.ArrayUtils;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.JTable;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Font;
+import javax.swing.SwingConstants;
 
 public class mainPanel extends JPanel {
 	private JTextField timeField;
@@ -66,6 +68,21 @@ public class mainPanel extends JPanel {
 	private JLabel latterPass3;
 	private JLabel countDown;
 	private SimpleDateFormat counterFormat = new SimpleDateFormat("HH:mm:ss");
+	
+	private JPanel infoPanel;
+	
+	private JPanel alarmPanel;
+	private JLabel lblNewLabel_2;
+	private JLabel alarmLOS;
+	private JLabel alarmDuration;
+	private JLabel alarmAOS;
+	
+	private int timer = 60;
+	
+	private JLabel alarmSatName;
+	private JLabel alarmObserver;
+	
+	private int numb = 0;
 	
 	/**
 	 * Create the panel.
@@ -115,8 +132,60 @@ public class mainPanel extends JPanel {
 		JScrollPane obsTabScroll = new JScrollPane(obsTable);
 		obsTabScroll.setBounds(168, 281, 534, 231);
 		add(obsTabScroll);
+
+		alarmPanel = new JPanel();
+		alarmPanel.setForeground(new Color(0, 100, 0));
+		alarmPanel.setBorder(null);
+		alarmPanel.setBackground(new Color(0, 250, 154));
+		alarmPanel.setBounds(168, 170, 534, 99);
+		add(alarmPanel);
+		alarmPanel.setLayout(null);
 		
-		JPanel infoPanel = new JPanel();
+		lblNewLabel_2 = new JLabel("Incomming Satellite");
+		lblNewLabel_2.setHorizontalAlignment(SwingConstants.CENTER);
+		lblNewLabel_2.setBounds(143, 16, 234, 16);
+		alarmPanel.add(lblNewLabel_2);
+		
+		JButton btnNewButton = new JButton("Close");
+		btnNewButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				alarmPanel.setVisible(false);
+			}
+		});
+		btnNewButton.setFont(new Font("Lucida Grande", Font.PLAIN, 10));
+		btnNewButton.setBounds(462, 64, 66, 29);
+		alarmPanel.add(btnNewButton);
+		
+		alarmSatName = new JLabel("Satellite Name");
+		alarmSatName.setForeground(new Color(139, 0, 0));
+		alarmSatName.setHorizontalAlignment(SwingConstants.CENTER);
+		alarmSatName.setFont(new Font("Lucida Grande", Font.BOLD, 24));
+		alarmSatName.setBounds(133, 31, 265, 36);
+		alarmPanel.add(alarmSatName);
+		
+		alarmObserver = new JLabel("Observer");
+		alarmObserver.setFont(new Font("Lucida Grande", Font.PLAIN, 16));
+		alarmObserver.setHorizontalAlignment(SwingConstants.CENTER);
+		alarmObserver.setBounds(202, 65, 121, 16);
+		alarmPanel.add(alarmObserver);
+		
+		alarmLOS = new JLabel("LOS : 00:00:00");
+		alarmLOS.setFont(new Font("Lucida Grande", Font.PLAIN, 10));
+		alarmLOS.setBounds(6, 35, 115, 16);
+		alarmPanel.add(alarmLOS);
+		
+		alarmDuration = new JLabel("Duration : 00 Minutes");
+		alarmDuration.setFont(new Font("Lucida Grande", Font.PLAIN, 10));
+		alarmDuration.setBounds(6, 51, 115, 16);
+		alarmPanel.add(alarmDuration);
+		
+		alarmAOS = new JLabel("AOS : 00:00:00");
+		alarmAOS.setFont(new Font("Lucida Grande", Font.PLAIN, 10));
+		alarmAOS.setBounds(6, 17, 107, 16);
+		alarmPanel.add(alarmAOS);
+		alarmPanel.setVisible(false);
+		
+		infoPanel = new JPanel();
 		infoPanel.setForeground(new Color(0, 100, 0));
 		infoPanel.setBorder(null);
 		infoPanel.setBackground(new Color(175, 238, 238));
@@ -175,6 +244,9 @@ public class mainPanel extends JPanel {
 		countDown.setBounds(159, 64, 90, 16);
 		infoPanel.add(countDown);
 		
+		
+		
+		
 		// Time Function
 		globalTime = new Timer(1000,new ActionListener() {
 			
@@ -182,15 +254,31 @@ public class mainPanel extends JPanel {
 			public void actionPerformed(ActionEvent e) {
 				// TODO Auto-generated method stub
 				timeString();
+				
+				// Blinking
+				if (numb==0) {
+					alarmPanel.setBackground(new Color(0, 250, 154));
+					numb++;
+				} else {
+					alarmPanel.setBackground(new Color(255, 0, 0));
+					numb--;
+				}
+				
+				// Satellite position refresh 
 				if (satList.size() > 0) {
 					paintSatDataToTable();
 				}
+				
+				// Info Panel
 				if (scheduleStack != null && scheduleStack.size() > 0) {
 					try {
 						countDown.setText(countDownMaker());
 						if(countDownMaker().equals("0:0:0")) {
+							setAlarmInfo();
 							initObsTable();
 							setInfoBoard();
+							infoPanel.setVisible(false);
+							alarmPanel.setVisible(true);
 						}
 					} catch (ParseException e1) {
 						// TODO Auto-generated catch block
@@ -204,6 +292,18 @@ public class mainPanel extends JPanel {
 					} catch (SatNotFoundException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
+					}
+				}
+				
+				// Alarm Panel
+				if (alarmPanel.isVisible()) {
+					
+					timer--;
+					
+					if (timer == 0) {
+						alarmPanel.setVisible(false);
+						infoPanel.setVisible(true);
+						timer = 60;
 					}
 				}
 			}
@@ -227,6 +327,10 @@ public class mainPanel extends JPanel {
 			}
 		});
 
+	}
+	
+	private void showAlarm() {
+		
 	}
 	
 	private String countDownMaker() throws ParseException {
@@ -263,8 +367,9 @@ public class mainPanel extends JPanel {
 	 * @throws SatNotFoundException 
 	 * @throws InvalidTleException 
 	 * @throws IllegalArgumentException 
+	 * @throws ParseException 
 	 */
-	public void setSelectedSatObj(HashMap<String,ArrayList<String>> map) throws IllegalArgumentException, InvalidTleException, SatNotFoundException {
+	public void setSelectedSatObj(HashMap<String,ArrayList<String>> map) throws IllegalArgumentException, InvalidTleException, SatNotFoundException, ParseException {
 		/**
 		satObj.putAll(map);
 		for(String key:map.keySet()) {
@@ -318,8 +423,9 @@ public class mainPanel extends JPanel {
 	 * @throws SatNotFoundException 
 	 * @throws InvalidTleException 
 	 * @throws IllegalArgumentException 
+	 * @throws ParseException 
 	 */
-	public void setNewObsObj (HashMap<String, ArrayList<String>> map) throws IllegalArgumentException, InvalidTleException, SatNotFoundException {
+	public void setNewObsObj (HashMap<String, ArrayList<String>> map) throws IllegalArgumentException, InvalidTleException, SatNotFoundException, ParseException {
 		/**
 		obsObj.putAll(map);
 		for(String key:map.keySet()) {
@@ -390,15 +496,20 @@ public class mainPanel extends JPanel {
 		satTable = new JTable(tModel);
 	}
 	
-	private void setInfoBoard() {
+	private void setInfoBoard() throws ParseException {
 		int idx = 0;
 		for(Map.Entry<Date, String[]> entry : this.scheduleStack.entrySet()) {
 			String[] time = entry.getKey().toString().split(" ",0);
 			String[] val = entry.getValue();
+			String[] los = val[1].split(" ",0);
 			if(idx == 0) {
 				this.infoSatName.setText(val[0]);
 				this.infoObsName.setText(val[3]);
 				this.infoPassTime.setText(time[3]);
+				
+				//String[] alarmParam = {val[0],val[3],time[3],los[3]};
+				//this.setAlarmInfo(alarmParam);
+				
 			} else if (idx == 1) {
 				this.latterPass1.setText(time[3]+" "+val[0]+" "+val[3]);
 			} else if (idx == 2) {
@@ -410,6 +521,37 @@ public class mainPanel extends JPanel {
 			}
 			idx++;
 		}
+	}
+	
+	/**
+	 * 
+	 * @param param [Satellite, Observer, AOS, LOS]
+	 * @throws ParseException 
+	 */
+	private void setAlarmInfo() throws ParseException {
+		Entry<Date, String[]> entry = this.scheduleStack.firstEntry();
+		String[] time = entry.getKey().toString().split(" ",0);
+		String[] val = entry.getValue();
+		String[] los = val[1].split(" ",0);
+		
+		this.alarmSatName.setText(val[0]);
+		this.alarmObserver.setText(val[3]);
+		this.alarmAOS.setText("AOS : "+time[3]);
+		this.alarmLOS.setText("LOS : "+los[3]);
+		
+		Date t1 = this.counterFormat.parse(time[3]);
+		Date t2 = this.counterFormat.parse(los[3]);
+		
+		long diff = t2.getTime()-t1.getTime();
+		
+		long diffSeconds = diff / 1000 % 60;
+		long diffMinutes = diff / (60 * 1000) % 60;
+		long diffHours = diff / (60 * 60 * 1000) % 24;
+		
+		String out = Long.toString(diffMinutes)+" minutes "+Long.toString(diffSeconds)+" seconds";
+		
+		this.alarmDuration.setText("Duration : "+out);
+		
 	}
 	
 	/**
@@ -429,8 +571,6 @@ public class mainPanel extends JPanel {
 		}
 		
 		Object[] arrCol = col.toArray();
-		
-		
 		
 		
 		

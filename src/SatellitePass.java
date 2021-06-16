@@ -5,6 +5,7 @@ import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.text.ParseException;
 
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
@@ -54,6 +55,9 @@ public class SatellitePass {
 				} catch (IllegalArgumentException | InvalidTleException | SatNotFoundException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
+				} catch (ParseException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
 				}
 			}
 			
@@ -69,6 +73,9 @@ public class SatellitePass {
 				try {
 					showAddObsDialog();
 				} catch (IllegalArgumentException | InvalidTleException | SatNotFoundException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				} catch (ParseException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
@@ -93,8 +100,9 @@ public class SatellitePass {
 	 * @throws SatNotFoundException 
 	 * @throws InvalidTleException 
 	 * @throws IllegalArgumentException 
+	 * @throws ParseException 
 	 */
-	private static void showAddObsDialog() throws IllegalArgumentException, InvalidTleException, SatNotFoundException {
+	private static void showAddObsDialog() throws IllegalArgumentException, InvalidTleException, SatNotFoundException, ParseException {
 		if (addObsDialog == null) {
 			Window win = SwingUtilities.getWindowAncestor(frame);
 			//if(win != null) {
@@ -118,8 +126,9 @@ public class SatellitePass {
 	 * @throws SatNotFoundException 
 	 * @throws InvalidTleException 
 	 * @throws IllegalArgumentException 
+	 * @throws ParseException 
 	 */
-	private static void showOpenFileDialog() throws IllegalArgumentException, InvalidTleException, SatNotFoundException {
+	private static void showOpenFileDialog() throws IllegalArgumentException, InvalidTleException, SatNotFoundException, ParseException {
 		JFileChooser fc = new JFileChooser();
 		fc.setCurrentDirectory(new File(System.getProperty("user.home")));
 		fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -143,8 +152,9 @@ public class SatellitePass {
 	 * @throws SatNotFoundException 
 	 * @throws InvalidTleException 
 	 * @throws IllegalArgumentException 
+	 * @throws ParseException 
 	 */
-	private static void openSatChooseDialog(String filePath) throws IllegalArgumentException, InvalidTleException, SatNotFoundException {
+	private static void openSatChooseDialog(String filePath) throws IllegalArgumentException, InvalidTleException, SatNotFoundException, ParseException {
 		if (satChooseDialog == null) {
 			Window win = SwingUtilities.getWindowAncestor(frame);
 			//if(win != null) {
