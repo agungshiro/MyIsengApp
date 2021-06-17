@@ -82,6 +82,9 @@ public class mainPanel extends JPanel {
 	private JLabel alarmSatName;
 	private JLabel alarmObserver;
 	
+	private AlarmSound alarm;
+	private String alarmFile;
+	
 	private int numb = 0;
 	
 	/**
@@ -150,6 +153,7 @@ public class mainPanel extends JPanel {
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				alarmPanel.setVisible(false);
+				infoPanel.setVisible(true);
 			}
 		});
 		btnNewButton.setFont(new Font("Lucida Grande", Font.PLAIN, 10));
@@ -244,6 +248,8 @@ public class mainPanel extends JPanel {
 		countDown.setBounds(159, 64, 90, 16);
 		infoPanel.add(countDown);
 		
+		alarm = new AlarmSound();
+		alarmFile = "src/TF010.WAV";
 		
 		
 		
@@ -274,6 +280,12 @@ public class mainPanel extends JPanel {
 					try {
 						countDown.setText(countDownMaker());
 						if(countDownMaker().equals("0:0:0")) {
+							new Thread(new Runnable() {
+								@Override
+								public void run() {
+									alarm.playAlarm(alarmFile);
+								}
+							}).start();
 							setAlarmInfo();
 							initObsTable();
 							setInfoBoard();

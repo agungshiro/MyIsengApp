@@ -1,9 +1,14 @@
 import java.util.ArrayList;
+
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.lang.Math;
 import java.text.SimpleDateFormat;
+
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineUnavailableException;
 
 
 public class Debuger {
@@ -43,7 +48,16 @@ public class Debuger {
 		//Object[] cols = colSeed.toArray();
 		//System.out.println(colSeed);
 		
+		AlarmSound alarm = new AlarmSound();
+		new Thread(new Runnable() {
 
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				alarm.playAlarm("src/TF010.WAV");
+			}
+		
+		}).start();
 	}
 
 }
