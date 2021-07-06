@@ -43,7 +43,7 @@ public class mainPanel extends JPanel {
 	private Timer globalTime;
 	private boolean timeStop = false;
 	
-	private JTree objectTree;
+	private ObjectTree objectTree;
 	private DefaultMutableTreeNode root;
 	private DefaultMutableTreeNode satelliteNode;
 	private DefaultMutableTreeNode observerNode;
@@ -113,10 +113,13 @@ public class mainPanel extends JPanel {
 		add(startStopTimeBtn);
 		
 		// Object Tree
-		objectTree = new JTree();
+		//objectTree = new ObjectTree();
 		this.buildTree();
 		objectTree.setBounds(17, 42, 139, 470);
 		add(objectTree);
+		JScrollPane treeScrollPane = new JScrollPane(objectTree);
+		treeScrollPane.setBounds(17, 42, 139, 470);
+		add(treeScrollPane);
 		
 		//satTable = new JTable();
 		initSatTable();
@@ -350,7 +353,15 @@ public class mainPanel extends JPanel {
 		String curTime = this.timeField.getText();
 		Date t1 = this.counterFormat.parse(passTime);
 		Date t2 = this.counterFormat.parse(curTime);
-		long diff = t1.getTime()-t2.getTime();
+		Date t3 = this.counterFormat.parse("23:59:00");
+		long diff;
+		
+		if(t1.getTime()<t2.getTime()) {
+			diff = t3.getTime()-t2.getTime()+t1.getTime();
+		} else {
+			diff = t1.getTime()-t2.getTime();
+		}
+		
 		
 		long diffSeconds = diff / 1000 % 60;
 		long diffMinutes = diff / (60 * 1000) % 60;
@@ -369,7 +380,8 @@ public class mainPanel extends JPanel {
 		observerNode = new DefaultMutableTreeNode("Observer");
 		root.add(satelliteNode);
 		root.add(observerNode);
-		objectTree = new JTree(root);
+		
+		objectTree = new ObjectTree();
 		
 	}
 	
@@ -397,7 +409,8 @@ public class mainPanel extends JPanel {
 			key = entry.getKey();
 			val = entry.getValue();
 			
-			this.addSatToTree(key);
+			//this.addSatToTree(key);
+			objectTree.addSatelliteObject(new DefaultMutableTreeNode(key));
 			String[] param = {key, val.get(0),val.get(1)};
 			
 			tle = new TLE(param);
@@ -452,7 +465,8 @@ public class mainPanel extends JPanel {
 						entry.getKey()
 					);
 			obsList.add(gsObs);
-			this.addObsToTree(entry.getKey());
+			//this.addObsToTree(entry.getKey());
+			objectTree.addObserverObject(new DefaultMutableTreeNode(entry.getKey()));
 		}
 		this.objectTree.repaint();
 		
