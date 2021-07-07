@@ -54,8 +54,10 @@ public class mainPanel extends JPanel {
 	
 	private DefaultTableModel tModel;
 	
-	private ArrayList<Satellite> satList;
-	private ArrayList<GroundStationPosition> obsList;
+	//private ArrayList<Satellite> satList;
+	private LinkedHashMap<String,Satellite> satList;
+	//private ArrayList<GroundStationPosition> obsList;
+	private LinkedHashMap<String,GroundStationPosition> obsList;
 	
 	private LinkedHashMap<String,TreeMap<Date,String[]>> schedule;
 	private TreeMap<Date,String[]> scheduleStack;
@@ -94,8 +96,9 @@ public class mainPanel extends JPanel {
 		setLayout(null);
 		
 		
-		satList = new ArrayList<>();
-		obsList = new ArrayList<>();
+		//satList = new ArrayList<>();
+		satList = new LinkedHashMap<>();
+		obsList = new LinkedHashMap<>();
 		
 		JLabel lblNewLabel = new JLabel("Time");
 		lblNewLabel.setBounds(222, 11, 31, 16);
@@ -375,13 +378,15 @@ public class mainPanel extends JPanel {
 	 * Build Tree
 	 */
 	private void buildTree() {
+		/**
 		root = new DefaultMutableTreeNode("Object");
 		satelliteNode = new DefaultMutableTreeNode("Satellite");
 		observerNode = new DefaultMutableTreeNode("Observer");
 		root.add(satelliteNode);
 		root.add(observerNode);
+		**/
 		
-		objectTree = new ObjectTree();
+		objectTree = new ObjectTree(this);
 		
 	}
 	
@@ -415,11 +420,13 @@ public class mainPanel extends JPanel {
 			
 			tle = new TLE(param);
 			sat = SatelliteFactory.createSatellite(tle);
-			satList.add(sat);
+			//satList.add(sat);
+			satList.put(key, sat);
 		}
 		this.objectTree.repaint();
 		
 		this.paintSatDataToTable();
+		
 		// Paint schedule table
 		if (this.obsList != null && this.obsList.size() > 0) {
 			this.initObsTable();
@@ -429,16 +436,31 @@ public class mainPanel extends JPanel {
 	}
 	
 	
-	private void paintSatDataToTable() {
+	public void paintSatDataToTable() {
 		tModel.setRowCount(0);
 		Date dt = new Date();
 		
+		/**
 		for(int x = 0; x < this.satList.size(); x++) {
 			Satellite sat = satList.get(x);
 			TLE tle = sat.getTLE();
 			SatPos pos = sat.getPosition(dt);
 			Object[] satData = {tle.getName(),Math.toDegrees(pos.getLatitude()),Math.toDegrees(pos.getLongitude())};
 			this.tModel.addRow(satData);
+		}**/
+		
+		for(Map.Entry<String, Satellite> entry : satList.entrySet()) {
+			Satellite sat = entry.getValue();
+			TLE tle = sat.getTLE();
+			SatPos pos = sat.getPosition(dt);
+			Object[] satData = {tle.getName(),Math.toDegrees(pos.getLatitude()),Math.toDegrees(pos.getLongitude())};
+			this.tModel.addRow(satData);
+		}
+	}
+	
+	public void removeFromSatList(String key) {
+		if(this.satList.containsKey(key)) {
+			this.satList.remove(key);
 		}
 	}
 	
@@ -464,7 +486,7 @@ public class mainPanel extends JPanel {
 						Double.parseDouble(entry.getValue().get(2)),
 						entry.getKey()
 					);
-			obsList.add(gsObs);
+			obsList.put(entry.getKey(),gsObs);
 			//this.addObsToTree(entry.getKey());
 			objectTree.addObserverObject(new DefaultMutableTreeNode(entry.getKey()));
 		}
@@ -475,6 +497,20 @@ public class mainPanel extends JPanel {
 			this.initObsTable();
 			this.setInfoBoard();
 		}
+	}
+	
+	public boolean isSatListNull() {
+		if (this.satList != null && this.satList.size() > 0) {
+			return false;
+		}
+		return true;
+	}
+	
+	public boolean isObsListNull() {
+		if (this.obsList != null && this.obsList.size() > 0) {
+			return false;
+		}
+		return true;
 	}
 	
 	/**
@@ -522,7 +558,7 @@ public class mainPanel extends JPanel {
 		satTable = new JTable(tModel);
 	}
 	
-	private void setInfoBoard() throws ParseException {
+	public void setInfoBoard() throws ParseException {
 		int idx = 0;
 		for(Map.Entry<Date, String[]> entry : this.scheduleStack.entrySet()) {
 			String[] time = entry.getKey().toString().split(" ",0);
@@ -586,7 +622,7 @@ public class mainPanel extends JPanel {
 	 * @throws InvalidTleException 
 	 * @throws IllegalArgumentException 
 	 */
-	private void initObsTable() throws IllegalArgumentException, InvalidTleException, SatNotFoundException {
+	public void initObsTable() throws IllegalArgumentException, InvalidTleException, SatNotFoundException {
 		DefaultTableModel obsTabModel = new DefaultTableModel();
 		ArrayList<String> colSeed = new ArrayList<String>(Arrays.asList("Day","Sats ","AOS","LOS","Max El"));
 		ArrayList<String> col = new ArrayList<>();
@@ -630,7 +666,7 @@ public class mainPanel extends JPanel {
 	 * Max Row
 	 * 
 	 */
-	private String[][] scheduleToTable() {
+	public String[][] scheduleToTable() {
 		// max schedule for each obs 
 		int numbObs = this.schedule.size();
 		int maxSch = 0;
@@ -673,7 +709,7 @@ public class mainPanel extends JPanel {
 	 * 				<Date, [Schedule_Items] > >
 	 * 
 	 */
-	private void generateSchedule() throws IllegalArgumentException, InvalidTleException, SatNotFoundException {
+	public void generateSchedule() throws IllegalArgumentException, InvalidTleException, SatNotFoundException {
 		// Iterate Observer
 		GroundStationPosition gs;
 		SatPos satPos;
@@ -684,14 +720,17 @@ public class mainPanel extends JPanel {
 		// Create Data Structure for Schedule based on each observer
 		// The Structure should be HashMap<Observer,HashMap<ComparableSatPass, String[]>>
 		
-		for (int x = 0; x < obsList.size(); x++) {
-			gs = obsList.get(x);
+		//for (int x = 0; x < obsList.size(); x++) {
+		for(Map.Entry<String, GroundStationPosition> entry: obsList.entrySet()) {
+			//gs = obsList.get(x);
+			gs = entry.getValue();
 			TreeMap<Date,String[]> obsSch = new TreeMap<>();
 			
 			// Iterate Satellite
-			for (int y = 0; y < satList.size(); y++) {
+			// for (int y = 0; y < satList.size(); y++) {
+			for(Map.Entry<String,Satellite> satEntry: satList.entrySet()) {
 				// Iterate Schedule of each satellite
-				Satellite sat = satList.get(y);
+				Satellite sat = satEntry.getValue();
 				TLE tle = sat.getTLE();
 				PassPredictor pp = new PassPredictor(tle,gs);
 				List<SatPassTime> passes = pp.getPasses(dt, 24, false);
@@ -710,6 +749,12 @@ public class mainPanel extends JPanel {
 		}
 		 
 		// Set Schedule Item
+	}
+	
+	public void removeFromObsList(String key) {
+		if(this.obsList.containsKey(key)) {
+			this.obsList.remove(key);
+		}
 	}
 	
 	class ComparableSatPass extends SatPassTime implements Comparable<ComparableSatPass> {
